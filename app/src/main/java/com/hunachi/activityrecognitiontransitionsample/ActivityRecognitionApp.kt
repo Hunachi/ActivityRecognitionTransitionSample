@@ -74,16 +74,16 @@ fun RequiresActivityRecignitionPermissionScreen(
         Column {
             Text("「身体活動」の権限を許可してください")
             if (permissionState.status.shouldShowRationale) {
-                Button(onClick = { permissionState.launchPermissionRequest() }) {
-                    Text("許可する")
-                }
-            } else {
                 val settingsIntent = Intent(
                     Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                     Uri.parse("package:com.hunachi.activityrecognitiontransitionsample")
                 )
                 settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 Button(onClick = { context.startActivity(settingsIntent) }) {
+                    Text("許可する")
+                }
+            } else {
+                Button(onClick = { permissionState.launchPermissionRequest() }) {
                     Text("許可する")
                 }
             }

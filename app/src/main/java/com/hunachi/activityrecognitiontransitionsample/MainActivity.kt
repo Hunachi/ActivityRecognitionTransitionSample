@@ -12,7 +12,6 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import android.content.BroadcastReceiver
 import android.content.Context
-import android.os.Build
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
@@ -50,16 +49,13 @@ class MainActivity : ComponentActivity() {
         )
 
         val intent = Intent(TRANSITIONS_RECEIVER_ACTION)
-        transitionsPendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            PendingIntent.getBroadcast(this@MainActivity, 0, intent, PendingIntent.FLAG_MUTABLE)
-        } else {
+        transitionsPendingIntent =
             PendingIntent.getBroadcast(
                 this@MainActivity,
-                0,
+                BROADCAST_REQUEST_CODE,
                 intent,
-                PendingIntent.FLAG_UPDATE_CURRENT
+                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
-        }
 
         transitionsReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -96,8 +92,12 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        unregisterReceiver(transitionsReceiver)
         super.onStop()
+        try {
+            unregisterReceiver(transitionsReceiver)
+        } catch (e: Exception) {
+            // タイミングによってはレシーバーが登録されてないことがあるため
+        }
     }
 
     private fun enableActivityTransitions() {
@@ -115,6 +115,11 @@ class MainActivity : ComponentActivity() {
             ActivityRecognition.getClient(this)
                 .requestActivityTransitionUpdates(request, transitionsPendingIntent!!)
         task?.addOnSuccessListener {
+            Toast.makeText(
+                this,
+                "Transition Apiが有効になりました",
+                Toast.LENGTH_SHORT
+            ).show()
             viewModel.changeActivityTrackingEnabledState(true)
         }
         task?.addOnFailureListener { e ->
@@ -145,5 +150,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
+        private const val BROADCAST_REQUEST_CODE = 0
     }
 }
